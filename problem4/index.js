@@ -71,25 +71,23 @@ const player = {
 // начальные параметры
 let monsterHealth = 10;
 let playerHealth = Number(
-  readlineSync.question("Choose max health level: 8, 9 or 10 ")
+  readlineSync.question("Choose your max health level: 8, 9 or 10 ")
 );
 let gameOver = false;
+const monsterCooldown = [0, 0, 0];
+const playerCooldown = [0, 0, 0, 0];
 
 // ход игры
 while (!gameOver) {
-  let monsterPunch = chooseMonsterPunch();
-  console.log(`Я собираюсь использовать для атаки ${monsterPunch.name}`);
+  let monsterAction = chooseMonsterPunch();
 
-  let playerAction =
-    player.moves[
-      Number(
-        readlineSync.question("Choose your action: type a number from 1 to 4 ")
-      ) - 1
-    ];
+  let playerAction = choosePlayerPunch();
 
-  calcDamage(monsterPunch, playerAction);
+  calcDamage(monsterAction, playerAction);
 
-  // console.log(monsterHealth, playerHealth);
+  console.log(
+    `Здоровье монстра - ${monsterHealth}, ваше здоровье - ${playerHealth}`
+  );
 
   if (playerHealth <= 0 && monsterHealth <= 0) {
     gameOver = true;
@@ -101,13 +99,50 @@ while (!gameOver) {
     gameOver = true;
     console.log("Игра окончена, вы победили!");
   }
+
+  for (let i = 0; i < monsterCooldown.length; i++) {
+    monsterCooldown[i]--;
+  }
+
+  for (let i = 0; i < playerCooldown.length; i++) {
+    playerCooldown[i]--;
+  }
+
+  // console.log(monsterCooldown, playerCooldown);
 }
 
 // случайный выбор действия монстра
 function chooseMonsterPunch() {
   let randomMove = Math.floor(Math.random() * 3);
-  //   console.log(monster.moves[randomMove].name);
-  return monster.moves[randomMove];
+  let monsterPunch = monster.moves[randomMove];
+  if (monsterCooldown[randomMove] <= 0) {
+    monsterCooldown[randomMove] = monsterPunch.cooldown + 1;
+    console.log(`Я собираюсь использовать для атаки ${monsterPunch.name}`);
+    return monsterPunch;
+  } else {
+    return chooseMonsterPunch();
+  }
+}
+
+// выбор действия для игрока
+function choosePlayerPunch() {
+  let actionNum =
+    Number(
+      readlineSync.question(
+        "Choose your action for attack: type a number from 1 to 4 "
+      )
+    ) - 1;
+  let playerPunch = player.moves[actionNum];
+  if (playerCooldown[actionNum] <= 0) {
+    playerCooldown[actionNum] = playerPunch.cooldown + 1;
+    console.log(`Вы выбрали ${playerPunch.name}`);
+    return playerPunch;
+  } else {
+    console.log(
+      "Действие не может быть выбрано в текущий ход! Выберите другое действие"
+    );
+    return choosePlayerPunch();
+  }
 }
 
 // подсчет урона после ударов
@@ -118,12 +153,12 @@ function calcDamage(punch1, punch2) {
     punch2.magicDmg * (1 - punch1.magicArmorPercents / 100);
   let monsterAfterDamage =
     monsterHealth - monsterPhysicDamage - monsterMagicDamage;
-  monsterHealth = monsterAfterDamage;
+  monsterHealth = monsterAfterDamage.toFixed(1);
 
   let playerPhysicDamage =
     punch1.physicalDmg * (1 - punch2.physicArmorPercents / 100);
   let playerMagicDamage =
     punch1.magicDmg * (1 - punch2.magicArmorPercents / 100);
   let playerAfterDamage = playerHealth - playerPhysicDamage - playerMagicDamage;
-  playerHealth = playerAfterDamage;
+  playerHealth = playerAfterDamage.toFixed(1);
 }
