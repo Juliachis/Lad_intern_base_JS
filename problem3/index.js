@@ -1,7 +1,7 @@
 const readlineSync = require("readline-sync");
 
 const answerNum = createAnswerNum();
-console.log(answerNum);
+// console.log(answerNum);
 let rounds = 10;
 let gameOver = false;
 
